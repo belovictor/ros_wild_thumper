@@ -1,0 +1,16 @@
+global_costmap:
+  global_frame: map
+  robot_base_frame: base_footprint
+  publish_frequency: 1.0
+  plugins:
+  - {name: static_layer, type: 'costmap_2d::StaticLayer'}
+  - {name: obstacle_layer, type: 'costmap_2d::ObstacleLayer'}
+  - {name: inflation_layer, type: 'costmap_2d::InflationLayer'}
+
+  inflation_layer:
+    inflation_radius: 0.4 # plan distance around corners
+
+  obstacle_layer:
+    combination_method: 0 # overwrite
+    track_unknown_space: true
+    enabled: false

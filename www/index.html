@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+
+		<link rel="stylesheet" href="assets/stylesheets/bootstrap.min.css">
+		<link rel="stylesheet" href="assets/stylesheets/jquery-ui.css">
+		<link rel="stylesheet" href="assets/stylesheets/jquery.minicolors.css">
+		<link rel="stylesheet" href="assets/stylesheets/application.css">
+
+		<script src="assets/javascripts/jquery-3.3.1.min.js"></script>
+		<script src="assets/javascripts/popper.min.js"></script>
+		<script src="assets/javascripts/bootstrap.min.js"></script>
+		<script src="assets/javascripts/jquery-ui.min.js"></script>
+		<script src="assets/javascripts/easeljs.min.js"></script>
+		<script src="assets/javascripts/eventemitter2.js"></script>
+		<script src="assets/javascripts/roslib.js"></script>
+		<script src="assets/javascripts/ros2d.js"></script>
+		<script src="assets/javascripts/nav2d.js"></script>
+		<script src="assets/javascripts/keyboardteleop.js"></script>
+		<script src="assets/javascripts/jquery.minicolors.js"></script>
+		<script src="assets/javascripts/vue.js"></script>
+		<script src="assets/javascripts/application.js"></script>
+		<script type="text/javascript">
+			const robothostname="wildthumper"
+		</script>
+
+		<title>Wild Thumper control</title>
+	</head>
+	<body onload="init()">
+		<div class="container-fluid">
+			<div id="information">
+				<div v-for="(alert, id) in alerts" class="alert alert-dismissible}" v-bind:class="classObject(id)">
+					<span data-dismiss="alert">{{alert.message}}</span>
+				</div>
+			</div>
+
+			<nav class="navbar navbar-expand-lg navbar-light bg-light">
+				<a class="navbar-brand" href="#">Wild Thumper</a>
+				<ul class="nav nav-tabs" role="tablist">
+					<li class="nav-item">
+						<a class="nav-link active" href="#data" data-toggle="tab" role="tab">Data</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#navigation" data-toggle="tab" role="tab">Navigation</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#lights" data-toggle="tab" role="tab">Lights</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#drive" data-toggle="tab" role="tab">Drive</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link imagelink" href="#image" data-toggle="tab" role="tab">Image</a>
+					</li>
+				</ul>
+			</nav>
+
+			<div class="tab-content">
+				<div id="data" class="tab-pane active" role="tabpanel">
+					<div class="row">
+						<div id="power" class="col-auto">
+							<h4>Power</h4>
+							<input-value v-model="voltage" label="Voltage" unit="V"></input-value>
+							<input-value v-model="current" label="Current" unit="A"></input-value>
+						</div>
+						<div id="sensors" class="col-auto">
+							<h4>Sensors</h4>
+							<input-value v-model="light" label="Light" unit="lx"></input-value>
+							<input-value v-model="temp" label="Temperature" unit="&#x2103"></input-value>
+							<input-value v-model="humidity" label="Humidity" unit="%"></input-value>
+							<input-value v-model="pressure" label="Pressure" unit="kPa"></input-value>
+							<input-value v-model="co" label="CO"></input-value>
+						</div>
+					</div>
+				</div>
+				<div id="navigation" class="tab-pane" role="tabpanel">
+					<div id="pose"></div>
+					<div id="map"></div>
+					<div id="speed-label">Speed: {{speed}} m/s</div>
+					<div id="speed-slider"></div>
+				</div>
+				<div id="lights" class="tab-pane" role="tabpanel">
+					<div class="row">
+						<div class="col-md-2 offset-md-1" >
+							<div class="d-flex justify-content-center">
+								<input class="led_color" type="hidden" :name="led" readonly="true" v-for="led in front_row" />
+							</div>
+							<div>
+								<div class="row wt-icon">
+									<div class="col-md-2 align-self-center bottom-leds">
+										<input class="led_color" type="hidden" :name="led" readonly="true" v-for="led in bottom_left_row" />
+									</div>
+									<div class="col-md-8">
+										<div class="d-flex justify-content-center top-leds">
+											<input class="led_color" type="hidden" :name="led" readonly="true" v-for="led in top_row" />
+										</div>
+									</div>
+									<div class="col-md-2 align-self-center bottom-leds">
+										<input class="led_color" type="hidden" :name="led" readonly="true" v-for="led in bottom_right_row" />
+									</div>
+								</div>
+							</div>
+							<div class="d-flex justify-content-center">
+								<input class="led_color" type="hidden" :name="led" readonly="true" v-for="led in aft_row" />
+							</div>
+						</div>
+						<div class="col-md-3 offset-md-1">
+							<input-led label="All" name="[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]"></input-led>
+							<input-led label="Front" name="[0, 1, 2, 3]"></input-led>
+							<input-led label="Aft" name="[8, 9, 10, 11]"></input-led>
+							<input-led label="Top" name="[4, 5, 6, 7]"></input-led>
+							<input-led label="Bottom" name="[12, 13, 14, 15]"></input-led>
+						</div>
+					</div>
+				</div>
+				<div id="drive" class="tab-pane" role="tabpanel">
+					<div class="row">
+						<div class="col-sd-10">
+							<div class="cmd_vel_circle"></div>
+						</div>
+						<div class="col-sd-1">
+							<input type="number" value="1.0" min="0.1" max="5.0" step="0.1" class="form-control" id="scale_trans">
+							<input type="number" value="3.0" min="1.0" max="5.0" step="0.1" class="form-control" id="scale_rot">
+						</div>
+					</div>
+				</div>
+				<div id="image" class="tab-pane" role="tabpanel">
+					<img id="usb_cam" src=""></img>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script type="text/x-template" id="input-value-template">
+		<div class="input-value">
+			<label>{{label}}:</label>
+			<div class="input-group">
+				<input type=text class="form-control" :value="value" readonly>
+				<div class="input-group-append" v-if="unit">
+					<span class="input-group-text">{{unit}}</span>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script type="text/x-template" id="input-led-template">
+		<div class="form-group row">
+			<label class="col-sm-2 col-form-label">{{label}}</label>
+			<div class="col-sm-10">
+				<input type="text" :name="name" class="led_color" readonly="true"/>
+			</div>
+		</div>
+	</script>
+</html>

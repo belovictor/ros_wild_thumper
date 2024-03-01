@@ -1,0 +1,15 @@
+#JSGF V1.0;
+
+grammar robot;
+
+<bool> = (on | off);
+<number> = minus* (zero | one | two | three | four | five | six | seven | eight | nine | ten | eleven | twelve | thirteen | fourteen | fifteen | sixteen | seventeen | eighteen | nineteen | twenty | thirty | forty | fifty | sixty | seventy | eighty  | ninety | hundred | thousand | million);
+
+<misc_command> = (light | lights) [<bool>];
+<engine> = (stop | forward | backward | increase speed | decrease speed);
+<get> = get (temp | temperature | light | voltage | current | pressure | mute | mic | silence | speed | velocity | position | angle | compass | motion | secure | engine | odom | humidity);
+<go> = go (forward | backward) <number>+ (meter | meters | centimeter | centimeters);
+<turn> = turn (left | right | (to | by) <number>+ [(degree | degrees)]);
+<speed> = set+ speed <number>+ | set default speed;
+
+public <rules> = <misc_command> | <engine> | <get> | <go> | <turn> | <speed>;

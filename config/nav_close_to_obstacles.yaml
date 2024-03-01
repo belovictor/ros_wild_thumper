@@ -1,0 +1,9 @@
+TrajectoryPlannerROS:
+  occdist_scale: 0.01
+  path_distance_bias: 1.2
+
+local_costmap:
+  resolution: 0.01
+
+global_costmap:
+  inflation_radius: 0.22

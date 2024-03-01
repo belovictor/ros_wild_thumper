@@ -1,0 +1,28 @@
+.minicolors-theme-default.minicolors {
+	margin: 5px;
+}
+
+.bottom-leds > .minicolors-theme-default.minicolors {
+	margin: 5px 0;
+}
+
+.top-leds > .minicolors-theme-default.minicolors {
+	margin-top: 70px;
+}
+
+.wt-icon {
+	background: url('../images/wt_top.png');
+	background-size: cover;
+	background-size: 100%;
+	background-repeat: no-repeat;
+	background-position: center;
+	height: 260px;
+}
+
+.cmd_vel_circle {
+	height: 250px;
+	width: 250px;
+	background-color: #bbb;
+	border-radius: 50%;
+	display: inline-block;
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<robot name="wild_thumper_with_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:property name="PI" value="3.1415926535897931" />
+	<xacro:include filename="$(find wild_thumper)/urdf/wild_thumper.urdf.xacro"/>
+	<xacro:include filename="$(find wt_open_manipulator)/urdf/open_manipulator.urdf.xacro"/>
+
+	<joint name="open_manipulator_joint" type="fixed">
+		<parent link="mounting_plate"/>
+		<child link="open_manipulator_base"/>
+		<origin xyz="-0.075 0.0 0.045" rpy="0 0 0"/>
+	</joint>
+</robot>

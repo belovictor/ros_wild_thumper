@@ -1,0 +1,12 @@
+# crontab:
+# @reboot screen -d -m -c ~/catkin_ws/src/wild_thumper/.screen-startup
+
+source $HOME/.screenrc
+
+screen 0 zsh -is eval 'sleep 10; roscore'
+screen 1 zsh -is eval 'roslaunch --wait wild_thumper wild_thumper.launch'
+screen 2 zsh -is eval '(($(/usr/sbin/i2cget -y 2 0x38 || echo 0xff) & 0x01)) || roslaunch --wait wild_thumper teleop.launch'
+#screen 3 zsh -is eval '(($(/usr/sbin/i2cget -y 2 0x38 || echo 0xff) & 0x02)) || roslaunch --wait wild_thumper move_base.launch'
+#screen 4 zsh -is eval '(($(/usr/sbin/i2cget -y 2 0x38 || echo 0xff) & 0x02)) || (sleep 20 && rosservice call global_localization)'
+#screen 3 zsh -is eval 'roslaunch --wait wild_thumper move_base.launch nomap:=true'
+select 2

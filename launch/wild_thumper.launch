@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<launch>
+	<env name="ROSCONSOLE_CONFIG_FILE" value="$(find wild_thumper)/config/rosconsole.config"/>
+
+	<arg name="use_imu" default="true"/>
+
+	<node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"/>
+
+	<!--
+	<param name="robot_description" command="$(find xacro)/xacro $(find wild_thumper)/urdf/wild_thumper.urdf.xacro"/>
+	-->
+	<param name="robot_description" command="$(find xacro)/xacro $(find wt_open_manipulator)/urdf/wild_thumper_with_manipulator.urdf.xacro use_nominal_extrinsics:=false"/>
+
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+		<param name="publish_frequency" value="20.0" />
+	</node>
+	<node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" output="screen">
+		<param name="robot_description" command="$(find xacro)/xacro $(find wild_thumper)/urdf/wild_thumper.urdf.xacro" />
+	</node>
+
+	<node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" output="screen">
+		<rosparam command="load" file="$(find wild_thumper)/config/analyzers.yaml"/>
+	</node>
+
+	<node pkg="wild_thumper" type="wt_node" name="wild_thumper" output="screen" respawn="false" required="true">
+		<param name="enable_odom_tf" value="true" unless="$(arg use_imu)"/>
+		<param name="enable_odom_tf" value="false" if="$(arg use_imu)"/>
+	</node>
+
+	<node pkg="tinkerforge_imu_ros" type="tinkerforge_imu_ros" name="tinkerforge_imu_brick2" output="screen" respawn="true" if="$(arg use_imu)">
+		<param name="uid" value="6DdNSn"/>
+		<param name="frame_id" value="base_imu_link"/>
+		<param name="period_ms" value="20"/>
+		<!-- Observed orientation variance: 0.0 (10k samples)
+		     Magnometer heading accuracy is +-2.5 deg => 0.088 rad
+		     With heading accuracy as std dev, variance = 0.088^2 = 0.008 -->
+		<param name="variance_orientation" value="0.008"/>
+		<param name="disable_leds" value="true"/>
+		<remap from="/tinkerforge_imu_brick2/imu" to="imu"/>
+	</node>
+
+	<include file="$(find yocs_cmd_vel_mux)/launch/cmd_vel_mux.launch">
+		<arg name="config_file" value="$(find wild_thumper)/config/cmd_vel_mux.yaml" />
+		<arg name="nodelet_manager_name" value="nodelet_manager" />
+	</include>
+
+	<node pkg="robot_localization" type="ekf_localization_node" name="ekf" clear_params="true" output="screen" if="$(arg use_imu)">
+		<rosparam command="load" file="$(find wild_thumper)/config/robot_localization.yaml"/>
+		<remap from="odometry/filtered" to="odom_combined"/>
+	</node>
+
+	<node pkg="gpsd_client" type="gpsd_client"  name="gpsd_client" output="screen">
+		<param name="use_gps_time" value="false"/>
+		<param name="frame_id" value="base_footprint"/>
+	</node>
+
+	<node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform_node" output="screen">
+		<param name="magnetic_declination_radians" value="0.047"/>
+		<param name="yaw_offset" value="0.0"/>
+		<param name="zero_altitude" value="true"/>
+		<param name="broadcast_utm_transform" value="true"/>
+		<param name="transform_timeout" value="0.2"/>
+
+		<remap from="/imu/data" to="imu"/>
+		<remap from="/gps/fix" to="fix" />
+		<remap from="/odometry/filtered" to="odom_combined"/>
+		<remap from="/odometry/gps" to="gps"/>
+	</node>
+
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+
+	<node pkg="wild_thumper" type="sensor_board.py" name="sensor_board" output="screen"/>
+	<node pkg="wild_thumper" type="ledstripe.rb" name="led_stripe" output="screen"/>
+
+	<node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
+		<param name="serial_port"         type="string" value="/dev/rplidar"/>
+		<param name="serial_baudrate"     type="int"    value="115200"/><!--A1/A2 -->
+		<param name="frame_id"            type="string" value="lidar"/>
+		<param name="angle_compensate"    type="bool"   value="true"/>
+		<param name="scan_mode"		  type="string"	value="Standard"/>
+		<!--
+		A2 scan_modes:
+		Standard: max_distance: 16.0 m, Point number: 2.0K
+		Express: max_distance: 16.0 m, Point number: 4.0K
+		 -->
+	</node>
+</launch>
